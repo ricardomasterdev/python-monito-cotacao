@@ -74,7 +74,7 @@ sazonalidade_map = {
     for k in setor_map.keys()
 }
 
-# ... [COLE AQUI os dicionários que você já tem acima] ...
+# ..... [COLE AQUI os dicionários que você já tem acima] ...
 
 # Carregar lista do CSV
 df_base = pd.read_csv('acoes_ibov.csv')
