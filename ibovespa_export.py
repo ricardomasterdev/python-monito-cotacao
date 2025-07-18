@@ -3,9 +3,10 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 import pandas as pd
 import yfinance as yf
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 from datetime import datetime
 
-# === (Seus dicionários aqui, igual ao original) ===
+# === Dicionários preenchidos ===
 setor_map = {
     "ABEV3": "Bebidas", "ALPA4": "Vestuário", "ASAI3": "Varejo Alimentar", "AZUL4": "Aéreas", "B3SA3": "Financeiro",
     "BBAS3": "Bancos", "BBDC3": "Bancos", "BBDC4": "Bancos", "BBSE3": "Seguros", "BPAC11": "Financeiro",
@@ -26,11 +27,8 @@ setor_map = {
 }
 
 preco_alvo_map = {k: round(1.15*v, 2) for k, v in zip(setor_map.keys(), [14, 10, 12, 1.5, 15, 23, 18, 20, 40, 55, 22, 25, 12, 150, 7, 12, 7, 44, 14, 10, 7, 11, 4, 27, 7, 9, 45, 50, 75, 17, 50, 37, 14, 21, 17, 10, 0.9, 42, 29, 11, 40, 39, 77, 22, 25, 10, 30, 42, 35, 34, 14, 15, 19, 15, 40, 15, 35, 24, 14, 35, 7, 15, 22, 8, 22, 17, 36, 25, 9, 17])}
-
 recomendacao_map = {k: "Compra" for k in setor_map.keys()}
-
 div_yield_map = {k: round(2 + (i % 5)*1.1, 2) for i, k in enumerate(setor_map.keys())}
-
 sazonalidade_map = {
     k: {
         "Bebidas": "Alta verão/festas",
@@ -73,8 +71,6 @@ sazonalidade_map = {
     }.get(setor_map[k], "Alta sazonalidade")
     for k in setor_map.keys()
 }
-
-# ..... [COLE AQUI os dicionários que você já tem acima] ...
 
 # Carregar lista do CSV
 df_base = pd.read_csv('acoes_ibov.csv')
@@ -152,21 +148,22 @@ nome_excel = f"acoes_ibov_completo_{timestamp}.xlsx"
 df.to_excel(nome_excel, index=False)
 print(f"Arquivo Excel salvo como: {nome_excel}")
 
-# Gerar PDF (opcional)
+# Gerar PDF (sem warnings de depreciação)
 nome_pdf = f"acoes_ibov_completo_{timestamp}.pdf"
+
 class PDF(FPDF):
     def header(self):
-        self.set_font("Arial", 'B', 12)
-        self.cell(0, 10, "Ações Ibovespa - Visão Geral", ln=True, align="C")
+        self.set_font("helvetica", 'B', 12)
+        self.cell(0, 10, "Ações Ibovespa - Visão Geral", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
         self.ln(5)
     def footer(self):
         self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+        self.set_font('helvetica', 'I', 8)
+        self.cell(0, 10, f'Página {self.page_no()}', new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
 
 pdf = PDF(orientation='L', unit='mm', format='A4')
 pdf.add_page()
-pdf.set_font("Arial", size=8)
+pdf.set_font("helvetica", size=8)
 colunas = df.columns
 larguras = [20, 35, 22, 30, 25, 20, 20, 20, 22, 28, 22, 40, 28]
 
@@ -183,3 +180,6 @@ for idx, row in df.iterrows():
 
 pdf.output(nome_pdf)
 print(f"Arquivo PDF salvo como: {nome_pdf}")
+
+input("Pressione ENTER para sair...")
+
