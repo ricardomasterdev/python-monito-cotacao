@@ -45,7 +45,7 @@ BBOX = (x1p, y1p, x2p, y2p)
 print(f"Usando BBOX calibrado (com margem): {BBOX} (w={x2p-x1p}, h={y2p-y1p})")
 
 # === PARÂMETROS DE MONITORAMENTO ===
-THRESHOLD = 16.60  # valor para disparar alerta
+THRESHOLD = 3.46  # valor para disparar alerta
 INTERVAL = 2       # intervalo em segundos entre capturas
 
 # === ALERTA SONORO (Windows) ===
