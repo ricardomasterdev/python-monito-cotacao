@@ -28,7 +28,7 @@ def send_whatsapp_alert(new_value, old_value):
     formatted_new = f"{new_value:.2f}".replace('.', ',')
     formatted_old = f"{old_value:.2f}".replace('.', ',') if old_value is not None else "não havia valor anterior"
     mensagem = (
-        f"A cotação mudou de *R$ {formatted_old}* para *R$ {formatted_new}*"
+        f"A cotação mudou de R$ {formatted_old} para *R$ {formatted_new}*"
     )
     payload = {
         'numero': PHONE_NUMBER,
