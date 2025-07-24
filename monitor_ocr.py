@@ -19,10 +19,23 @@ API_URL      = 'http://localhost:3000/send'
 API_TOKEN    = 'Ric@7901'
 PHONE_NUMBER = '556284537185'
 
+# === PARÂMETROS DE MONITORAMENTO ===
+THRESHOLD     = 7.57  # valor que dispara o envio
+INTERVAL      = 2     # segundos entre capturas
+SEND_INTERVAL = 10    # segundos entre envios repetidos
+
 def send_whatsapp_alert(value):
+    """Envia alerta por WhatsApp via sua API Node."""
+    # formata valores com vírgula
+    formatted_value     = f"{value:.2f}".replace('.', ',')
+    formatted_threshold = f"{THRESHOLD:.2f}".replace('.', ',')
+    mensagem = (
+        f"A cotação monitorada de R$ {formatted_threshold} foi atingida; "
+        f"cotação atual: *R$ {formatted_value}*"
+    )
     payload = {
         'numero': PHONE_NUMBER,
-        'mensagem': f'Alerta OCR: cotação atingiu {value:.2f}'
+        'mensagem': mensagem
     }
     headers = {
         'Authorization': f'Bearer {API_TOKEN}',
@@ -58,18 +71,15 @@ x2p, y2p = x2 + pad_x, y2 + pad_y
 BBOX = (x1p, y1p, x2p, y2p)
 print(f"Usando BBOX calibrado (com margem): {BBOX} (w={x2p-x1p}, h={y2p-y1p})")
 
-# === PARÂMETROS DE MONITORAMENTO ===
-THRESHOLD     = 7.60  # valor que dispara o envio
-INTERVAL      = 2     # segundos entre capturas
-SEND_INTERVAL = 10    # segundos entre envios repetidos
-
 def capture_and_ocr():
+    """Captura a região BBOX e retorna texto OCR."""
     img = ImageGrab.grab(bbox=BBOX)
     gray = img.convert("L")
     config = r'-c tessedit_char_whitelist=0123456789., --psm 6'
     return pytesseract.image_to_string(gray, config=config, lang="eng+por").strip()
 
 def parse_price(text):
+    """Converte texto OCR para float válido ou retorna None."""
     t = text.strip()
     if not re.match(r'^[0-9]{1,4}[.,][0-9]{2}$', t):
         return None
@@ -77,6 +87,7 @@ def parse_price(text):
     return v if 0.01 <= v <= 1000 else None
 
 def check_ocr_loop():
+    """Loop contínuo de OCR e envio periódico via WhatsApp."""
     last_send = 0.0
     while True:
         raw = capture_and_ocr()
@@ -86,11 +97,14 @@ def check_ocr_loop():
         if value is not None:
             formatted = f"{value:.2f}".replace('.', ',')
             root.after(0, lambda f=formatted: price_var.set(f))
-            # Se >= THRESHOLD e já passou o SEND_INTERVAL desde último envio:
             now = time.time()
             if value >= THRESHOLD and (now - last_send) >= SEND_INTERVAL:
                 last_send = now
-                threading.Thread(target=send_whatsapp_alert, args=(value,), daemon=True).start()
+                threading.Thread(
+                    target=send_whatsapp_alert,
+                    args=(value,),
+                    daemon=True
+                ).start()
         else:
             root.after(0, lambda r=raw: price_var.set(f"?{r}"))
         time.sleep(INTERVAL)
@@ -107,7 +121,11 @@ tk.Label(root, text="Preço Reconhecido:", font=("Arial", 14)).pack()
 price_var = tk.StringVar(master=root, value="—")
 tk.Label(root, textvariable=price_var, font=("Arial", 36, "bold")).pack(pady=5)
 
-tk.Label(root, text=f"Alerta ≥ {THRESHOLD:.2f}".replace('.', ','), font=("Arial", 10)).pack(pady=2)
+tk.Label(
+    root,
+    text=f"Alerta ≥ {THRESHOLD:.2f}".replace('.', ','),
+    font=("Arial", 10)
+).pack(pady=2)
 
 threading.Thread(target=check_ocr_loop, daemon=True).start()
 root.mainloop()
