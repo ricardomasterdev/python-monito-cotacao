@@ -15,7 +15,7 @@ except AttributeError:
     pass
 
 # === PARÂMETROS DA SUA API NODE ===
-API_URL      = 'http://localhost:3000/send'
+API_URL      = 'http://app1.cdxsistemas.com.br:3000/send'
 API_TOKEN    = 'Ric@7901'
 PHONE_NUMBER = '556284537185'
 
