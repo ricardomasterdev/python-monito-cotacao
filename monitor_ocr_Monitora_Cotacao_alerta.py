@@ -2,7 +2,7 @@ import platform
 import threading
 import time
 import tkinter as tk
-from datetime import datetime
+from datetime import datetime              # ← import datetime
 from PIL import ImageGrab
 import pytesseract
 import pyautogui
@@ -21,14 +21,17 @@ API_TOKEN    = 'Ric@7901'
 PHONE_NUMBER = '556284537185'
 
 # === PARÂMETROS DE MONITORAMENTO ===
+THRESHOLD     = 7.60  # valor que dispara o envio
 INTERVAL      = 2     # segundos entre capturas
+SEND_INTERVAL = 10    # segundos entre envios repetidos
 
-def send_whatsapp_alert(new_value, old_value):
+def send_whatsapp_alert(value):
     """Envia alerta por WhatsApp via sua API Node."""
-    formatted_new = f"{new_value:.2f}".replace('.', ',')
-    formatted_old = f"{old_value:.2f}".replace('.', ',') if old_value is not None else "não havia valor anterior"
+    formatted_value     = f"{value:.2f}".replace('.', ',')
+    formatted_threshold = f"{THRESHOLD:.2f}".replace('.', ',')
     mensagem = (
-        f"A cotação mudou de R$ {formatted_old} para R$ {formatted_new}"
+        f"A cotação monitorada de R$ {formatted_threshold} foi atingida; "
+        f"cotação atual: *R$ {formatted_value}*"
     )
     payload = {
         'numero': PHONE_NUMBER,
@@ -84,23 +87,26 @@ def parse_price(text):
     return v if 0.01 <= v <= 1000 else None
 
 def check_ocr_loop():
-    """Loop contínuo de OCR e envio sempre que o valor mudar."""
-    last_value = None
+    """Loop contínuo de OCR e envio periódico via WhatsApp."""
+    last_send = 0.0
     while True:
         raw = capture_and_ocr()
         value = parse_price(raw)
+        # timestamp atual
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f"[{now_str}] Raw OCR: '{raw}' -> Parsed: {value}")
         root.after(0, lambda r=raw: raw_var.set(r if r else '(vazio)'))
         if value is not None:
-            root.after(0, lambda f=f"{value:.2f}".replace('.', ','): price_var.set(f))
-            if last_value is None or value != last_value:
+            formatted = f"{value:.2f}".replace('.', ',')
+            root.after(0, lambda f=formatted: price_var.set(f))
+            now = time.time()
+            if value >= THRESHOLD and (now - last_send) >= SEND_INTERVAL:
+                last_send = now
                 threading.Thread(
                     target=send_whatsapp_alert,
-                    args=(value, last_value),
+                    args=(value,),
                     daemon=True
                 ).start()
-                last_value = value
         else:
             root.after(0, lambda r=raw: price_var.set(f"?{r}"))
         time.sleep(INTERVAL)
@@ -116,6 +122,12 @@ tk.Label(root, textvariable=raw_var, font=("Arial", 12)).pack(pady=2)
 tk.Label(root, text="Preço Reconhecido:", font=("Arial", 14)).pack()
 price_var = tk.StringVar(master=root, value="—")
 tk.Label(root, textvariable=price_var, font=("Arial", 36, "bold")).pack(pady=5)
+
+tk.Label(
+    root,
+    text=f"Alerta ≥ {THRESHOLD:.2f}".replace('.', ','),
+    font=("Arial", 10)
+).pack(pady=2)
 
 threading.Thread(target=check_ocr_loop, daemon=True).start()
 root.mainloop()
