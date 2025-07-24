@@ -2,6 +2,7 @@ import platform
 import threading
 import time
 import tkinter as tk
+from datetime import datetime              # ← import datetime
 from PIL import ImageGrab
 import pytesseract
 import pyautogui
@@ -20,13 +21,12 @@ API_TOKEN    = 'Ric@7901'
 PHONE_NUMBER = '556284537185'
 
 # === PARÂMETROS DE MONITORAMENTO ===
-THRESHOLD     = 7.57  # valor que dispara o envio
+THRESHOLD     = 7.60  # valor que dispara o envio
 INTERVAL      = 2     # segundos entre capturas
 SEND_INTERVAL = 10    # segundos entre envios repetidos
 
 def send_whatsapp_alert(value):
     """Envia alerta por WhatsApp via sua API Node."""
-    # formata valores com vírgula
     formatted_value     = f"{value:.2f}".replace('.', ',')
     formatted_threshold = f"{THRESHOLD:.2f}".replace('.', ',')
     mensagem = (
@@ -92,7 +92,9 @@ def check_ocr_loop():
     while True:
         raw = capture_and_ocr()
         value = parse_price(raw)
-        print(f"Raw OCR: '{raw}' -> Parsed: {value}")
+        # timestamp atual
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{now_str}] Raw OCR: '{raw}' -> Parsed: {value}")
         root.after(0, lambda r=raw: raw_var.set(r if r else '(vazio)'))
         if value is not None:
             formatted = f"{value:.2f}".replace('.', ',')
