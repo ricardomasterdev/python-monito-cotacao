@@ -59,7 +59,7 @@ BBOX = (x1p, y1p, x2p, y2p)
 print(f"Usando BBOX calibrado (com margem): {BBOX} (w={x2p-x1p}, h={y2p-y1p})")
 
 # === PARÂMETROS DE MONITORAMENTO ===
-THRESHOLD     = 7.57  # valor que dispara o envio
+THRESHOLD     = 7.60  # valor que dispara o envio
 INTERVAL      = 2     # segundos entre capturas
 SEND_INTERVAL = 10    # segundos entre envios repetidos
 
